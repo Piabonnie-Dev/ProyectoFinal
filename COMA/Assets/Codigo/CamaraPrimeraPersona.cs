@@ -3,28 +3,63 @@ using UnityEngine;
 public class CamaraPrimeraPersona : MonoBehaviour
 {
     public Transform cuerpoJugador;
-    public float sensibilidad = 150f;
+  public Camera camara;
+  public Mover mover;
 
-    private float rotacionX = 0f;
+  [Header ("Mouse")]
+  public float sensibilidadX = 180f;
+  public float sensibilidadY = 180f;
+  public float limiteArriba = 89f;
+    public float limiteAbajo = -89f;
+
+    [Header ("Visual")]
+    public float fovNormal = 72f;
+    public float fovCorriendo = 79f;
+    public float suavizadoFov = 8f;
+    private float rotacionX;
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (camara == null)
+        camara = GetComponentInChildren<Camera>();
+
+       Cursor.lockState = CursorLockMode.Locked;
+       Cursor.visible = false; 
+
     }
 
-    void Update()
+void Update()
     {
-        float mouseX = Input.GetAxis("Mouse X") * sensibilidad * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * sensibilidad * Time.deltaTime;
+        
+ActualizarMouseLook();
+ActualizarFov();
+
+
+    }
+
+   void ActualizarMouseLook()
+    {
+        float mouseX = Input.GetAxis("Mouse X")* sensibilidadX * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * sensibilidadY * Time.deltaTime;
+
 
         rotacionX -= mouseY;
-        rotacionX = Mathf.Clamp(rotacionX, 0f, 120f);
+        rotacionX = Mathf.Clamp(rotacionX, -80f, 80f);
+transform.localRotation = Quaternion.Euler(rotacionX, 0f, 0f);
+if(cuerpoJugador != null)
+cuerpoJugador.Rotate(Vector3.up * mouseX);
 
-        // La cámara solo mira arriba y abajo
-        transform.localRotation = Quaternion.Euler(rotacionX, 0f, 0f);
+    } 
+    void ActualizarFov()
+    {
+        if (camara == null)
+        return;
 
-        // El cuerpo gira a izquierda y derecha
-        cuerpoJugador.Rotate(Vector3.up * mouseX);
+        float objetivo = fovNormal; 
+        if(mover != null && mover.EstaCorriendo)
+objetivo = fovCorriendo;
+camara.fieldOfView = Mathf.Lerp(camara.fieldOfView, objetivo , suavizadoFov * Time.deltaTime);
     }
+
+
 }
