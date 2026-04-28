@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,12 +24,13 @@ public class InventarioLoot : MonoBehaviour
 {
    [Header("Capacidad")]
    public int capacidadMaximaObjetos = 10;
-   public float pesoMaximo = 20;
+   public float pesoMaximo = 20f;
 
    [Header("Estado actual")]
    public List<LootGuardado> lootRecolectado = new List<LootGuardado>();
    public float pesoActual = 0f;
    public int valorTotal = 0;
+   public event Action AlCambiarInventario;
 
    public bool PuedeRecoger(LootItem item)
     {
@@ -55,6 +56,8 @@ public class InventarioLoot : MonoBehaviour
             "\nObjetos: " + lootRecolectado.Count + "/" + capacidadMaximaObjetos +
             " | Peso total: " + pesoActual + "/" + pesoMaximo +
             " | Valor total: " + valorTotal);
+
+            NotificarCambio();
         return true;
     }
 
@@ -63,6 +66,15 @@ public class InventarioLoot : MonoBehaviour
         lootRecolectado.Clear();
         pesoActual = 0f;
         valorTotal = 0;
+    }
+
+    public List<LootGuardado> ObtenerLoot()
+    {
+        return lootRecolectado;
+    }
+    void NotificarCambio()
+    {
+        AlCambiarInventario?.Invoke();
     }
     
 }

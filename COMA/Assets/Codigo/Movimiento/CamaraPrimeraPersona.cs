@@ -30,6 +30,8 @@ public class CamaraPrimeraPersona : MonoBehaviour
 
 void Update()
     {
+         if (UIInventarioLoot.InventarioAbierto)
+        return;
         
 ActualizarMouseLook();
 ActualizarFov();

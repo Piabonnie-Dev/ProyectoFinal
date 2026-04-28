@@ -64,6 +64,10 @@ public class Mover : MonoBehaviour
 
     void Update()
     {
+if(UIInventarioLoot.InventarioAbierto)
+return;
+
+
         if (pivoteCamara == null)
             return;
 
