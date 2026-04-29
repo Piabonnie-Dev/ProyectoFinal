@@ -64,6 +64,10 @@ public class Mover : MonoBehaviour
 
     void Update()
     {
+
+if(ControlPartida.PartidaTerminada)
+return;
+
 if(UIInventarioLoot.InventarioAbierto)
 return;
 

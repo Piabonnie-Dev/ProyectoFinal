@@ -36,6 +36,11 @@ public class AgarrarObjetos : MonoBehaviour
 
     void Update()
     {
+if (ControlPartida.PartidaTerminada)
+    return;
+
+
+
         if (camaraJugador != null)
         {
             Debug.DrawRay(camaraJugador.transform.position, camaraJugador.transform.forward * distanciaMaxima, Color.red);
@@ -64,6 +69,9 @@ public class AgarrarObjetos : MonoBehaviour
 
     void FixedUpdate()
     {
+if (ControlPartida.PartidaTerminada)
+    return;
+
         if (objetoActual != null)
         {
             MoverObjetoAgarrado();

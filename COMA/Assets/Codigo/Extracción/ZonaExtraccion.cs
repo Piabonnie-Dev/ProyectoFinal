@@ -28,6 +28,9 @@ public class ZonaExtraccion : MonoBehaviour
     }
     void Update()
     {
+if (ControlPartida.PartidaTerminada)
+    return;
+
         if(!jugadorDentro)
         return;
 
