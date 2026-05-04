@@ -17,6 +17,10 @@ public class ControlPartida : MonoBehaviour
     public GameObject panelDerrota;
     public TMP_Text textoDerrota;
 
+    [Header("UI a cerrar")]
+    public UIInventarioLoot uiInventario;
+    public SuitUpgradeUI uiTraje;
+
     void Start()
     {
         PartidaTerminada = false;
@@ -38,12 +42,23 @@ public class ControlPartida : MonoBehaviour
             progreso.AlCumplirCuota -= TerminarPartidaPorCuota;
     }
 
+    void CerrarPanelesAbiertos()
+    {
+        if (uiInventario != null)
+            uiInventario.CerrarInventarioForzado();
+
+        if (uiTraje != null)
+            uiTraje.CerrarPanelForzado();
+    }
+
     void TerminarPartidaPorCuota()
     {
         if (PartidaTerminada)
             return;
 
         PartidaTerminada = true;
+
+        CerrarPanelesAbiertos();
 
         if (panelVictoria != null)
             panelVictoria.SetActive(true);
@@ -61,19 +76,15 @@ public class ControlPartida : MonoBehaviour
         if (PartidaTerminada)
             return;
 
-        Debug.Log("Se ejecutó TerminarPartidaPorMuerte()");
-
         PartidaTerminada = true;
+
+        CerrarPanelesAbiertos();
 
         if (panelDerrota != null)
             panelDerrota.SetActive(true);
-        else
-            Debug.LogWarning("panelDerrota no está asignado.");
 
         if (textoDerrota != null)
             textoDerrota.text = "HAS MUERTO\nPartida terminada";
-        else
-            Debug.LogWarning("textoDerrota no está asignado.");
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

@@ -88,4 +88,11 @@ public class UIInventarioLoot : MonoBehaviour
                 "\nValor total: $" + inventario.valorTotal;
         }
     }
+    public void CerrarInventarioForzado()
+{
+    InventarioAbierto = false;
+
+    if (panelInventario != null)
+        panelInventario.SetActive(false);
+}
 }

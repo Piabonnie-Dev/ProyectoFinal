@@ -6,6 +6,9 @@ public class Mover : MonoBehaviour
     [Header("Referencias")]
     public Transform pivoteCamara;
 
+    [Header("Mejoras del Traje")]
+    public PlayerSuitStats trajeStats;
+
     [Header("Velocidades")]
     public float velocidadCaminar = 4.8f;
     public float velocidadCorrer = 7.2f;
@@ -50,6 +53,9 @@ public class Mover : MonoBehaviour
 
     void Awake()
     {
+        if (trajeStats == null)
+            trajeStats = GetComponent<PlayerSuitStats>();
+
         controller = GetComponent<CharacterController>();
         controller.height = alturaNormal;
         controller.center = new Vector3(0f, alturaNormal * 0.5f, 0f);
@@ -64,13 +70,14 @@ public class Mover : MonoBehaviour
 
     void Update()
     {
+        if (ControlPartida.PartidaTerminada)
+            return;
 
-if(ControlPartida.PartidaTerminada)
-return;
+        if (UIInventarioLoot.InventarioAbierto)
+            return;
 
-if(UIInventarioLoot.InventarioAbierto)
-return;
-
+        if (SuitUpgradeUI.PanelAbierto)
+            return;
 
         if (pivoteCamara == null)
             return;
@@ -106,6 +113,10 @@ return;
         bool enSuelo = controller.isGrounded;
         float velocidadObjetivo = estaAgachado ? velocidadAgachado : velocidadCaminar;
 
+        float multiplicadorTraje = 1f;
+        if (trajeStats != null)
+            multiplicadorTraje = trajeStats.ObtenerMultiplicadorVelocidad();
+
         bool intentaCorrer = Input.GetKey(KeyCode.LeftShift) && z > 0f && !estaAgachado && EstaMoviendose;
         bool puedeCorrer = intentaCorrer;
 
@@ -116,7 +127,7 @@ return;
 
             if (intentaCorrer && staminaActual > 0f && temporizadorRecuperacion <= 0f)
             {
-                velocidadObjetivo = velocidadCorrer;
+                velocidadObjetivo = velocidadCorrer * multiplicadorTraje;
                 EstaCorriendo = true;
                 staminaActual -= gastoStamina * Time.deltaTime;
 
@@ -140,11 +151,13 @@ return;
         {
             EstaCorriendo = intentaCorrer;
             if (EstaCorriendo)
-                velocidadObjetivo = velocidadCorrer;
+                velocidadObjetivo = velocidadCorrer * multiplicadorTraje;
         }
 
         if (puedeCorrer)
-            velocidadObjetivo = velocidadCorrer;
+            velocidadObjetivo = velocidadCorrer * multiplicadorTraje;
+        else
+            velocidadObjetivo *= multiplicadorTraje;
 
         Vector3 velocidadHorizontalDeseada = direccionDeseada * velocidadObjetivo;
 
@@ -191,7 +204,7 @@ return;
         controller.Move(movimientoFinal * Time.deltaTime);
 
         Vector3 velocidadPlana = new Vector3(controller.velocity.x, 0f, controller.velocity.z);
-        VelocidadHorizontal01 = Mathf.InverseLerp(0f, velocidadCorrer, velocidadPlana.magnitude);
+        VelocidadHorizontal01 = Mathf.InverseLerp(0f, velocidadCorrer * multiplicadorTraje, velocidadPlana.magnitude);
     }
 
     void ActualizarCapsula()
