@@ -17,6 +17,9 @@ public class RecolectorLoot : MonoBehaviour
 
    void Update()
     {
+if (ControlPartida.PartidaTerminada)
+    return;
+
         if (Input.GetKeyDown(teclaRecoger))
         {
             IntentarRecoger();
