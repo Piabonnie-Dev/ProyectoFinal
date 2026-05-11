@@ -30,6 +30,9 @@ public class CamaraPrimeraPersona : MonoBehaviour
 
 void Update()
     {
+if (ControlPartida.PartidaTerminada)
+    return;
+
          if (UIInventarioLoot.InventarioAbierto)
         return;
         

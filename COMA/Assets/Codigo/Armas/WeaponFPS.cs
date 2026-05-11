@@ -132,6 +132,7 @@ public class WeaponFPS : MonoBehaviour
 
         Ray ray = new Ray(camaraJugador.transform.position, direccion);
 
+// Cambiar el rayo por una bala mas bien con un objeto.
         if (Physics.Raycast(ray, out RaycastHit hit, alcance))
         {
             Debug.DrawLine(ray.origin, hit.point, Color.red, 1f);
@@ -141,7 +142,7 @@ public class WeaponFPS : MonoBehaviour
                 Explode(hit.point);
                 return;
             }
-
+// Hacer un metodo donde la bala tenga daño mediante colisiones
             EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
 
             if (enemy != null)
