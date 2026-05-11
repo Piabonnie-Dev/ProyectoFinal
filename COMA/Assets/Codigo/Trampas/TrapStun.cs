@@ -90,7 +90,7 @@ public class TrapStun : MonoBehaviour
 
         }
 
-void OnDrawnGizmosSelected()
+void OnDrawGizmosSelected()
     {
 //Dibujamos el radio de deteccion
         Gizmos.color = Color.yellow;
