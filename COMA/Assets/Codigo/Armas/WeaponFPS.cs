@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,23 +15,25 @@ public class WeaponFPS : MonoBehaviour
     [Header("Referencias")]
     public Camera camaraJugador;
     public TMP_Text textoMunicion;
+    public TMP_Text textoModoDisparo;
     public Image crosshair;
 
-    [Header("Tipo de arma")]
+    [Header("Tipo actual")]
     public TipoDisparo tipoDisparo = TipoDisparo.Normal;
-
-    [Header("Daño")]
-    public float danio = 25f;
-    public float duracionStun = 4f;
-    public float radioExplosion = 4f;
 
     [Header("Disparo")]
     public float alcance = 60f;
-    public float cadencia = 0.18f;
+    public float cadencia = 0.2f;
     public float dispersionCadera = 0.02f;
     public float dispersionApuntando = 0.005f;
 
-    [Header("Municion")]
+    [Header("Daño / efectos")]
+    public float danioNormal = 25f;
+    public float duracionStun = 4f;
+    public float danioExplosivo = 40f;
+    public float radioExplosion = 4f;
+
+    [Header("Munición")]
     public int balasPorCargador = 12;
     public int municionEnCargador = 12;
     public int municionReserva = 60;
@@ -44,12 +47,12 @@ public class WeaponFPS : MonoBehaviour
     public Vector3 posicionApuntando = new Vector3(-0.08f, -0.03f, 0.12f);
 
     [Header("Crosshair")]
-    public float crosshairTamNormal = 22f;
-    public float crosshairTamApuntando = 12f;
+    public float tamCrosshairNormal = 22f;
+    public float tamCrosshairApuntando = 12f;
 
-    private float ultimoDisparo = -999f;
     private bool recargando = false;
     private bool apuntando = false;
+    private float ultimoDisparo = -999f;
     private Vector3 posicionObjetivo;
 
     void Start()
@@ -74,16 +77,34 @@ public class WeaponFPS : MonoBehaviour
 
         apuntando = Input.GetMouseButton(1);
 
-        ActualizarApuntadoVisual();
+        ActualizarVisualApuntado();
 
         if (Input.GetKeyDown(KeyCode.R))
             IntentarRecargar();
 
         if (Input.GetMouseButton(0))
             IntentarDisparar();
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            tipoDisparo = TipoDisparo.Normal;
+            ActualizarUI();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            tipoDisparo = TipoDisparo.Stun;
+            ActualizarUI();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            tipoDisparo = TipoDisparo.Explosiva;
+            ActualizarUI();
+        }
     }
 
-    void ActualizarApuntadoVisual()
+    void ActualizarVisualApuntado()
     {
         if (camaraJugador == null)
             return;
@@ -96,10 +117,10 @@ public class WeaponFPS : MonoBehaviour
 
         if (crosshair != null)
         {
-            float tam = apuntando ? crosshairTamApuntando : crosshairTamNormal;
+            float tamObjetivo = apuntando ? tamCrosshairApuntando : tamCrosshairNormal;
             crosshair.rectTransform.sizeDelta = Vector2.Lerp(
                 crosshair.rectTransform.sizeDelta,
-                new Vector2(tam, tam),
+                new Vector2(tamObjetivo, tamObjetivo),
                 velocidadApuntado * Time.deltaTime
             );
         }
@@ -132,28 +153,29 @@ public class WeaponFPS : MonoBehaviour
 
         Ray ray = new Ray(camaraJugador.transform.position, direccion);
 
-// Cambiar el rayo por una bala mas bien con un objeto.
         if (Physics.Raycast(ray, out RaycastHit hit, alcance))
         {
             Debug.DrawLine(ray.origin, hit.point, Color.red, 1f);
 
             if (tipoDisparo == TipoDisparo.Explosiva)
             {
-                Explode(hit.point);
+                AplicarExplosion(hit.point);
                 return;
             }
-// Hacer un metodo donde la bala tenga daño mediante colisiones
-            EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
 
-            if (enemy != null)
+            EnemyHealth enemigo = hit.collider.GetComponentInParent<EnemyHealth>();
+
+            if (enemigo != null)
             {
                 if (tipoDisparo == TipoDisparo.Normal)
                 {
-                    enemy.RecibirDanio(danio);
+                    enemigo.RecibirDanio(danioNormal);
+                    Debug.Log("Disparo normal impactó a " + enemigo.name);
                 }
                 else if (tipoDisparo == TipoDisparo.Stun)
                 {
-                    enemy.Aturdir(duracionStun);
+                    enemigo.Aturdir(duracionStun);
+                    Debug.Log("Disparo stun impactó a " + enemigo.name);
                 }
             }
         }
@@ -163,15 +185,18 @@ public class WeaponFPS : MonoBehaviour
         }
     }
 
-    void Explode(Vector3 centro)
+    void AplicarExplosion(Vector3 centro)
     {
-        Collider[] golpes = Physics.OverlapSphere(centro, radioExplosion);
+        Collider[] hits = Physics.OverlapSphere(centro, radioExplosion);
 
-        for (int i = 0; i < golpes.Length; i++)
+        for (int i = 0; i < hits.Length; i++)
         {
-            EnemyHealth enemy = golpes[i].GetComponentInParent<EnemyHealth>();
-            if (enemy != null)
-                enemy.RecibirDanio(danio);
+            EnemyHealth enemigo = hits[i].GetComponentInParent<EnemyHealth>();
+            if (enemigo != null)
+            {
+                enemigo.RecibirDanio(danioExplosivo);
+                Debug.Log("Explosión dañó a " + enemigo.name);
+            }
         }
     }
 
@@ -189,7 +214,7 @@ public class WeaponFPS : MonoBehaviour
         StartCoroutine(Recargar());
     }
 
-    System.Collections.IEnumerator Recargar()
+    IEnumerator Recargar()
     {
         recargando = true;
         yield return new WaitForSeconds(tiempoRecarga);
@@ -208,20 +233,14 @@ public class WeaponFPS : MonoBehaviour
     {
         if (textoMunicion != null)
             textoMunicion.text = municionEnCargador + " / " + municionReserva;
-    }
 
-    public void CambiarTipoDisparo(TipoDisparo nuevoTipo)
-    {
-        tipoDisparo = nuevoTipo;
+        if (textoModoDisparo != null)
+            textoModoDisparo.text = "Modo: " + tipoDisparo;
     }
 
     void OnDrawGizmosSelected()
     {
-        if (tipoDisparo == TipoDisparo.Explosiva)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, radioExplosion);
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, radioExplosion);
     }
 }
-
