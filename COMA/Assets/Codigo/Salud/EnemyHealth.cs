@@ -44,6 +44,7 @@ public void RecibirDanio(float cantidad)
         return;
 
         vidaActual -= cantidad;
+        vidaActual = Mathf.Clamp(vidaActual, 0f, vidaMaxima);
 
         if( vidaActual <= 0f)
         {
