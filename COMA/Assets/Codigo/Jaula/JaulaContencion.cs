@@ -1,137 +1,194 @@
 using System.Collections.Generic;
-using UnityEngine.AI;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class JaulaContencion : MonoBehaviour
 {
     [Header("Punto interno de la jaula")]
-public Transform puntoContenido;
-    
+
+    // Lugar donde se coloca el enemigo dentro de la jaula.
+    public Transform puntoContenido;
+
     [Header("Vida de la jaula")]
+
+    // Vida máxima de la jaula.
     public float vidaMaximaJaula = 100f;
+
+    // Vida actual de la jaula.
     public float vidaActualJaula = 100f;
 
-    [Header("Danio del enemigo vivo")]
+    [Header("Daño del enemigo vivo")]
+
+    // Daño que hace el enemigo a la jaula si está vivo.
     public float danioPorGolpeEnemigo = 8f;
+
+    // Tiempo entre golpes del enemigo encerrado.
     public float intervaloGolpeEnemigo = 1.2f;
 
-    [Header("Feedback visual")]
+    [Header("Colores de desgaste")]
+
+    // Renderers de las barras de la jaula.
     public Renderer[] partesVisualesJaula;
+
+    // Color sano.
     public Color colorSano = Color.cyan;
+
+    // Color dañado.
     public Color colorDaniado = Color.red;
 
     [Header("Transporte")]
+
+    // Permite mover la jaula.
     public bool puedeMoverse = true;
+
+    // Si la masa es menor o igual a este valor, se puede cargar.
     public float pesoParaConsiderarlaLigera = 18f;
-    
-    [Header("Estado de captura")]
+
+    [Header("Estado")]
+
+    // Enemigo capturado.
     public EnemyHealth enemigoCapturado;
 
+    // Indica si hay criatura dentro.
     public bool tieneCriatura = false;
-    public bool estaRota = false; 
 
-//Componentes del enemigo que se apagaron al capturar. 
-    private List<MonoBehaviour> scriptsIAApagados = new List<MonoBehaviour>();
+    // Indica si la jaula ya se rompió.
+    public bool estaRota = false;
 
-private List<Collider> collidersApagados = new List<Collider>();
+    private Rigidbody rb;
 
-private NavMeshAgent agentCapturado;
-private Rigidbody rb;
-private float proximoGolpe = 0f;
+    private NavMeshAgent agentCapturado;
 
+    private Transform padreOriginalEnemigo;
 
-private void Awake()
+    private readonly List<MonoBehaviour> scriptsIAApagados = new List<MonoBehaviour>();
+
+    private readonly List<Collider> collidersApagados = new List<Collider>();
+
+    private float proximoGolpe = 0f;
+
+    private void Awake()
     {
-        vidaActualJaula = vidaMaximaJaula;
+        // Tomamos el Rigidbody de la jaula.
         rb = GetComponent<Rigidbody>();
 
-        if(partesVisualesJaula != null || partesVisualesJaula.Length == 0)
+        // Inicializamos la vida.
+        vidaActualJaula = vidaMaximaJaula;
+
+        // Si no asignaste renderers, los buscamos automáticamente.
+        if (partesVisualesJaula == null || partesVisualesJaula.Length == 0)
         {
             partesVisualesJaula = GetComponentsInChildren<Renderer>();
-
         }
+
+        // Aplicamos color inicial.
         ActualizarColorJaula();
     }
+
     private void Update()
     {
-        // Si no hay criatura, no hace daño interno.
+        // Si no hay criatura, no hay golpes internos.
         if (!tieneCriatura)
             return;
 
-        // Si la jaula está rota, no hace nada.
+        // Si la jaula ya se rompió, no hacemos nada.
         if (estaRota)
             return;
 
-        // Si el enemigo está vivo, golpea la jaula cada cierto tiempo.
+        // Si el enemigo está vivo, golpea la jaula.
         if (enemigoCapturado != null && !enemigoCapturado.estaMuerto)
         {
-            ProcesarGolpesDelEnemigo();
+            GolpearJaulaDesdeDentro();
         }
     }
 
     public void CapturarEnemigo(EnemyHealth enemigo)
     {
-       if(enemigo == null)
-       {
-        return;
-       }
+        // Validamos enemigo.
+        if (enemigo == null)
+            return;
 
+        // Guardamos referencia.
+        enemigoCapturado = enemigo;
+        tieneCriatura = true;
 
-       enemigoCapturado = enemigo;
+        // Guardamos su padre original por si después queremos restaurarlo.
+        padreOriginalEnemigo = enemigo.transform.parent;
 
-       tieneCriatura = true;
-       if(puntoContenido == null)
-        {
+        // Colocamos la jaula correctamente sobre el suelo.
+        AcomodarJaulaEnSuelo(enemigo.transform.position);
+
+        // Si no hay punto interno, usamos el centro del objeto.
+        if (puntoContenido == null)
             puntoContenido = transform;
-        }
 
+        // Movemos al enemigo dentro de la jaula.
         enemigo.transform.position = puntoContenido.position;
-        //Hacemos que el enemigo sea hijo de la jaula, asi se mueve con ella.
-        enemigo.transform.SetParent(transform);
 
-        UnityEngine.AI.NavMeshAgent agent = enemigo.GetComponent<UnityEngine.AI.NavMeshAgent>();
-if(agent != null)
+        // Lo enderezamos para que no quede acostado o torcido.
+        enemigo.transform.rotation = Quaternion.Euler(0f, enemigo.transform.eulerAngles.y, 0f);
+
+        // Lo hacemos hijo de la jaula para que viaje con ella.
+        enemigo.transform.SetParent(transform, true);
+
+        // Apagamos movimiento e IA.
+        ApagarMovimientoEIA(enemigo);
+
+        // Apagamos colliders para que no empuje la jaula desde adentro.
+        ApagarCollidersEnemigo(enemigo);
+
+        // Aseguramos física correcta de la jaula.
+        if (rb != null)
         {
-            agent.ResetPath();
-            agent.enabled = false;
+            rb.useGravity = true;
+            rb.isKinematic = false;
         }
 
-        MonoBehaviour[] scripts = enemigo.GetComponents<MonoBehaviour>();
-foreach (MonoBehaviour script in scripts)
-    {
-        if (script == null)
-        {
-            continue;
-        }
-
-        if (script is EnemyHealth)
-        {
-            continue;
-        }
-
-        string nombreScript = script.GetType().Name;
-
-        if (nombreScript.Contains("AI") || nombreScript.Contains("EnemyVision") || nombreScript.Contains("EnemyBlind"))
-        {
-            script.enabled = false;
-        }
+        Debug.Log("Criatura contenida: " + enemigo.name);
     }
 
-    Debug.Log("Enemigo capturado dentro de la jaula: " + enemigo.name);
+    private void AcomodarJaulaEnSuelo(Vector3 posicionBase)
+    {
+        // Lanzamos un rayo hacia abajo para encontrar el suelo real.
+        Vector3 origen = posicionBase + Vector3.up * 3f;
+
+        RaycastHit hit;
+
+        if (Physics.Raycast(origen, Vector3.down, out hit, 8f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            // Ponemos la jaula en el suelo.
+            transform.position = hit.point;
+        }
+        else
+        {
+            // Si no encuentra suelo, usamos la posición del enemigo.
+            transform.position = posicionBase;
+        }
+
+        // Enderezamos la jaula.
+        transform.rotation = Quaternion.identity;
     }
 
     private void ApagarMovimientoEIA(EnemyHealth enemigo)
     {
+        // Buscamos NavMeshAgent del enemigo.
         agentCapturado = enemigo.GetComponent<NavMeshAgent>();
-        if(agentCapturado != null)
+
+        // Apagamos el agente.
+        if (agentCapturado != null)
         {
-            agentCapturado.ResetPath();
+            if (agentCapturado.enabled && agentCapturado.isOnNavMesh)
+            {
+                agentCapturado.ResetPath();
+                agentCapturado.isStopped = true;
+            }
+
             agentCapturado.enabled = false;
         }
 
+        // Tomamos scripts del enemigo.
         MonoBehaviour[] scripts = enemigo.GetComponents<MonoBehaviour>();
 
-        // Apagamos scripts de IA, pero no apagamos EnemyHealth.
         for (int i = 0; i < scripts.Length; i++)
         {
             MonoBehaviour script = scripts[i];
@@ -143,64 +200,70 @@ foreach (MonoBehaviour script in scripts)
             if (script is EnemyHealth)
                 continue;
 
-            // Apagamos scripts cuyo nombre parezca IA.
-            string nombreScript = script.GetType().Name;
+            string nombre = script.GetType().Name;
 
-            if (nombreScript.Contains("AI") || nombreScript.Contains("EnemyVision") || nombreScript.Contains("EnemyBlind"))
+            // Apagamos scripts de IA.
+            if (nombre.Contains("AI") || nombre.Contains("EnemyVision") || nombre.Contains("EnemyBlind"))
             {
-                script.enabled = false;
-                scriptsIAApagados.Add(script);
+                if (script.enabled)
+                {
+                    script.enabled = false;
+                    scriptsIAApagados.Add(script);
+                }
             }
         }
     }
 
     private void ApagarCollidersEnemigo(EnemyHealth enemigo)
     {
-        // Tomamos todos los colliders del enemigo.
         Collider[] colliders = enemigo.GetComponentsInChildren<Collider>();
 
-        // Los apagamos para evitar colisiones raras dentro de la jaula.
         for (int i = 0; i < colliders.Length; i++)
         {
-            if (colliders[i] == null)
+            Collider col = colliders[i];
+
+            if (col == null)
                 continue;
 
-            colliders[i].enabled = false;
-            collidersApagados.Add(colliders[i]);
+            if (col.enabled)
+            {
+                col.enabled = false;
+                collidersApagados.Add(col);
+            }
         }
     }
 
-    private void ProcesarGolpesDelEnemigo()
+    private void GolpearJaulaDesdeDentro()
     {
-        // Revisamos si ya toca otro golpe.
+        // Todavía no toca el siguiente golpe.
         if (Time.time < proximoGolpe)
             return;
 
-        // Programamos el siguiente golpe.
+        // Programamos siguiente golpe.
         proximoGolpe = Time.time + intervaloGolpeEnemigo;
 
-        // Aplicamos daño a la jaula.
+        // Aplicamos daño.
         RecibirDanioJaula(danioPorGolpeEnemigo);
 
-        Debug.Log("La criatura golpeó la jaula. Vida jaula: " + vidaActualJaula);
+        Debug.Log("La criatura golpeó la jaula. Vida: " + vidaActualJaula);
     }
 
     public void RecibirDanioJaula(float cantidad)
     {
-        // Si ya está rota, no recibe más daño.
+        // Si ya está rota, no recibe daño.
         if (estaRota)
             return;
 
-        // Bajamos vida.
+        // Restamos vida.
         vidaActualJaula -= cantidad;
 
-        // Limitamos la vida entre 0 y la máxima.
+        // Limitamos la vida.
         vidaActualJaula = Mathf.Clamp(vidaActualJaula, 0f, vidaMaximaJaula);
 
         // Actualizamos color.
         ActualizarColorJaula();
 
-        // Si llegó a 0, se rompe.
+        // Si llegó a cero, se rompe.
         if (vidaActualJaula <= 0f)
         {
             RomperJaula();
@@ -209,30 +272,30 @@ foreach (MonoBehaviour script in scripts)
 
     private void ActualizarColorJaula()
     {
-        // Calculamos porcentaje de vida.
+        // Calculamos porcentaje.
         float porcentaje = vidaActualJaula / vidaMaximaJaula;
 
-        // Entre menos vida, más rojo.
+        // Mientras menos vida, más rojo.
         Color colorActual = Color.Lerp(colorDaniado, colorSano, porcentaje);
 
-        // Aplicamos el color a cada parte visual.
         for (int i = 0; i < partesVisualesJaula.Length; i++)
         {
             if (partesVisualesJaula[i] == null)
                 continue;
 
+            // Usamos material instanciado para que no cambie todos los prefabs.
             partesVisualesJaula[i].material.color = colorActual;
         }
     }
 
     private void RomperJaula()
     {
-        // Marcamos la jaula como rota.
+        // Marcamos como rota.
         estaRota = true;
 
         Debug.Log("La jaula se rompió.");
 
-        // Liberamos al enemigo.
+        // Liberamos al enemigo antes de destruir la jaula.
         LiberarEnemigo();
 
         // Destruimos la jaula.
@@ -241,34 +304,57 @@ foreach (MonoBehaviour script in scripts)
 
     private void LiberarEnemigo()
     {
-        // Si no hay enemigo, no hacemos nada.
+        // Si no hay enemigo, salimos.
         if (enemigoCapturado == null)
             return;
 
-        // Quitamos al enemigo como hijo de la jaula.
-        enemigoCapturado.transform.SetParent(null);
+        Transform enemigoTransform = enemigoCapturado.transform;
+
+        // Lo sacamos de la jaula antes de destruirla.
+        enemigoTransform.SetParent(padreOriginalEnemigo, true);
+
+        // Enderezamos al enemigo.
+        enemigoTransform.rotation = Quaternion.Euler(0f, enemigoTransform.eulerAngles.y, 0f);
+
+        // Buscamos una posición válida en NavMesh cerca de donde está.
+        Vector3 posicionLiberacion = enemigoTransform.position;
+
+        NavMeshHit hit;
+
+        if (NavMesh.SamplePosition(posicionLiberacion, out hit, 4f, NavMesh.AllAreas))
+        {
+            posicionLiberacion = hit.position;
+        }
+
+        enemigoTransform.position = posicionLiberacion;
 
         // Reactivamos colliders.
         for (int i = 0; i < collidersApagados.Count; i++)
         {
             if (collidersApagados[i] != null)
+            {
                 collidersApagados[i].enabled = true;
+            }
         }
 
-        // Si el enemigo está muerto, no reactivamos IA.
+        // Si el enemigo está muerto, NO reactivamos IA.
+        // Se queda como cadáver/capturable.
         if (enemigoCapturado.estaMuerto)
+        {
+            Debug.Log("La jaula se rompió, pero el enemigo estaba muerto.");
             return;
+        }
 
         // Reactivamos NavMeshAgent.
         if (agentCapturado != null)
         {
             agentCapturado.enabled = true;
 
-            // Lo colocamos cerca de la posición actual sobre NavMesh.
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(enemigoCapturado.transform.position, out hit, 2f, NavMesh.AllAreas))
+            if (agentCapturado.isOnNavMesh)
             {
-                agentCapturado.Warp(hit.position);
+                agentCapturado.Warp(posicionLiberacion);
+                agentCapturado.isStopped = false;
+                agentCapturado.ResetPath();
             }
         }
 
@@ -276,8 +362,12 @@ foreach (MonoBehaviour script in scripts)
         for (int i = 0; i < scriptsIAApagados.Count; i++)
         {
             if (scriptsIAApagados[i] != null)
+            {
                 scriptsIAApagados[i].enabled = true;
+            }
         }
+
+        Debug.Log("Enemigo liberado y reactivado.");
     }
 
     public bool EsLigera()
@@ -286,8 +376,6 @@ foreach (MonoBehaviour script in scripts)
         if (rb == null)
             return true;
 
-        // Si la masa está dentro del límite, se puede cargar.
         return rb.mass <= pesoParaConsiderarlaLigera;
     }
-    }
-
+}
