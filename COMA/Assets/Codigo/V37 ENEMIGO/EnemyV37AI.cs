@@ -1,11 +1,12 @@
-using UnityEngine.AI;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyV37AI : MonoBehaviour
 {
     [Header("Referencias")]
     public Transform jugador;
     public NavMeshAgent agente;
+    public EnemyHealth vida;
 
     [Header("Puntos de patrulla")]
     public Transform[] puntosPatrulla;
@@ -13,184 +14,316 @@ public class EnemyV37AI : MonoBehaviour
     [Header("Capas")]
     public LayerMask capaObstaculos;
 
-    [Header("Deteccion ")]
-    public float distanciaVision = 18f;
-    public float anguloVision = 90f;
-    public float distanciaAcecho = 14f;
-    public float tiempoAntesDeEmboscada = 4f;
+    [Header("Detección")]
+    public float distanciaVision = 28f;
+    public float anguloVision = 120f;
+    public float distanciaAcecho = 20f;
+    public float tiempoAntesDeEmboscada = 1.2f;
+    public float tiempoMemoriaJugador = 8f;
 
     [Header("Movimiento")]
     public float velocidadPatrulla = 2f;
-    public float velocidadAcecho = 1.4f;
+    public float velocidadAcecho = 4f;
     public float velocidadEmboscada = 10f;
+    public float aceleracionPersecucion = 35f;
+
+    [Header("Rotación")]
+    public float velocidadRotacion = 14f;
 
     [Header("Ataque")]
-    public float distanciaAtaque = 2.2f;
-    public float danioAtaque = 75f;
-    public float tiempoEntreAtaques = 1.5f;
+    public float distanciaAtaque = 2.5f;
+    public float dañoAtaque = 35f;
+    public float tiempoEntreAtaques = 1f;
 
-    [Header("Recuperacion")]
-    public float tiempoRecuperacionDespuesEmboscada =2f;
+    [Header("Búsqueda")]
+    public float tiempoBuscandoUltimaPosicion = 3f;
 
     [Header("Estado actual")]
-public EstadoV37 estadoActual = EstadoV37.Patrulla;
+    public EstadoV37 estadoActual = EstadoV37.Patrulla;
 
-private int indicePatrulla = 0;
-private float contadorAcecho = 0f;
-private float contadorAtaque = 0f;
-private float contadorRecuperacion = 0f;
-private bool estaStuneado = false;
-private float contadorStun = 0f;
-private bool estaMuerto = false;
+    private int indicePatrulla = 0;
+    private float contadorAcecho = 0f;
+    private float contadorAtaque = 0f;
+    private float contadorMemoria = 0f;
+    private float contadorBusqueda = 0f;
+    private float contadorActualizarDestino = 0f;
 
-public enum EstadoV37
+    private Vector3 ultimaPosicionConocidaJugador;
+
+    private bool estaStuneado = false;
+    private float contadorStun = 0f;
+    private bool estaMuerto = false;
+
+    public enum EstadoV37
     {
         Patrulla,
         Acecho,
-        Emboscada,
-        Recuperacion
+        Persecucion,
+        BuscarUltimaPosicion,
+        Muerto
     }
+
     private void Start()
     {
-        if(agente == null)
+        // Buscamos el NavMeshAgent si no fue asignado.
+        if (agente == null)
         {
             agente = GetComponent<NavMeshAgent>();
         }
-        if(jugador == null)
+
+        // Buscamos la vida del enemigo.
+        if (vida == null)
+        {
+            vida = GetComponent<EnemyHealth>();
+        }
+
+        // Buscamos al jugador por tag si no fue asignado.
+        if (jugador == null)
         {
             GameObject objetoJugador = GameObject.FindGameObjectWithTag("Player");
 
-            if(objetoJugador != null)
+            if (objetoJugador != null)
             {
                 jugador = objetoJugador.transform;
             }
         }
 
-        agente.speed = velocidadPatrulla;
+        // Configuración fuerte para que V37 no se sienta torpe.
+        if (agente != null)
+        {
+            agente.updateRotation = false;
+            agente.updateUpAxis = false;
+            agente.baseOffset = 0f;
+            agente.stoppingDistance = distanciaAtaque * 0.8f;
+            agente.acceleration = aceleracionPersecucion;
+            agente.angularSpeed = 720f;
+            agente.speed = velocidadPatrulla;
+        }
+
+        // Guardamos una posición inicial.
+        if (jugador != null)
+        {
+            ultimaPosicionConocidaJugador = jugador.position;
+        }
+
+        // Inicia patrullando.
         IrAlSiguientePuntoPatrulla();
-
-
     }
 
-private void Update()
+    private void Update()
     {
-        if(estaMuerto) return;
+        // Si EnemyHealth ya marcó muerte, detenemos la IA.
+        if (vida != null && vida.estaMuerto)
+        {
+            DetenerIA();
+            return;
+        }
 
+        // Si está muerto, no hace nada.
+        if (estaMuerto)
+        {
+            return;
+        }
+
+        // Si no hay jugador o agente, no hacemos nada.
+        if (jugador == null || agente == null || !agente.enabled)
+        {
+            return;
+        }
+
+        // Forzamos que el cuerpo no se incline en X/Z.
+        MantenerRotacionRecta();
+
+        // Si está stuneado, se queda detenido.
         if (estaStuneado)
         {
             ProcesarStun();
             return;
-
         }
-        if(contadorAtaque > 0f)
+
+        // Bajamos el cooldown de ataque.
+        if (contadorAtaque > 0f)
         {
             contadorAtaque -= Time.deltaTime;
         }
 
+        // Detectamos al jugador.
+        bool jugadorVisible = PuedeVerJugador();
+        bool jugadorCerca = Vector3.Distance(transform.position, jugador.position) <= distanciaAcecho;
+
+        // Si lo ve o lo siente cerca, actualiza memoria.
+        if (jugadorVisible || jugadorCerca)
+        {
+            ultimaPosicionConocidaJugador = jugador.position;
+            contadorMemoria = tiempoMemoriaJugador;
+        }
+        else
+        {
+            contadorMemoria -= Time.deltaTime;
+        }
+
+        // Ejecutamos el estado actual.
         switch (estadoActual)
         {
-            case EstadoV37.Patrulla :
-                EstadoPatrulla();
+            case EstadoV37.Patrulla:
+                EstadoPatrulla(jugadorVisible, jugadorCerca);
                 break;
 
-                case EstadoV37.Acecho:
-                EstadoAcecho();
+            case EstadoV37.Acecho:
+                EstadoAcecho(jugadorVisible, jugadorCerca);
                 break;
 
-                case EstadoV37.Emboscada:
-                EstadoEmboscada();
+            case EstadoV37.Persecucion:
+                EstadoPersecucion(jugadorVisible, jugadorCerca);
                 break;
 
-            case EstadoV37.Recuperacion:
-                EstadoRecuperacion();
+            case EstadoV37.BuscarUltimaPosicion:
+                EstadoBuscarUltimaPosicion(jugadorVisible, jugadorCerca);
                 break;
-
-
-
         }
     }
 
-    private void EstadoPatrulla()
+    private void EstadoPatrulla(bool jugadorVisible, bool jugadorCerca)
     {
-        // Durante patrulla, V37 se mueve lento.
+        // Velocidad de patrulla.
         agente.speed = velocidadPatrulla;
+        agente.isStopped = false;
 
-        // Si ya llegó a su punto, cambia al siguiente.
-        if (!agente.pathPending && agente.remainingDistance <= 0.5f)
+        // Rota hacia donde camina.
+        RotarHaciaMovimiento();
+
+        // Si llegó a un punto, va al siguiente.
+        if (!agente.pathPending && agente.remainingDistance <= 0.6f)
         {
             IrAlSiguientePuntoPatrulla();
         }
 
-        // Si ve al jugador o está suficientemente cerca, empieza a acechar.
-        if (PuedeVerJugador() || Vector3.Distance(transform.position, jugador.position) <= distanciaAcecho)
+        // Si detecta al jugador, pasa a acecho.
+        if (jugadorVisible || jugadorCerca)
         {
             CambiarEstado(EstadoV37.Acecho);
         }
     }
 
-    private void EstadoAcecho()
+    private void EstadoAcecho(bool jugadorVisible, bool jugadorCerca)
     {
-        // En acecho, V37 se mueve lento para dar tensión.
+        // En acecho se acerca, pero ya no va lentísimo.
         agente.speed = velocidadAcecho;
+        agente.isStopped = false;
 
-        // V37 no corre todavía: se acerca poco a poco al jugador.
-        agente.SetDestination(jugador.position);
+        // Actualizamos destino cada poco tiempo para que no se sienta arrastrado.
+        ActualizarDestinoConIntervalo(jugador.position, 0.12f);
 
-        // Aumentamos el tiempo de acecho.
+        // Mira al jugador sin inclinarse.
+        RotarSoloEnYHacia(jugador.position);
+
+        // Cuenta el tiempo de acecho.
         contadorAcecho += Time.deltaTime;
 
-        // Si acechó suficiente tiempo, entra en emboscada.
-        if (contadorAcecho >= tiempoAntesDeEmboscada)
-        {
-            CambiarEstado(EstadoV37.Emboscada);
-        }
-
-        // Si el jugador se aleja mucho y no lo puede ver, regresa a patrulla.
+        // Si el jugador está muy cerca, no espera: entra en persecución.
         float distancia = Vector3.Distance(transform.position, jugador.position);
 
-        if (distancia > distanciaVision + 5f && !PuedeVerJugador())
+        if (distancia <= distanciaAtaque * 3f)
+        {
+            CambiarEstado(EstadoV37.Persecucion);
+            return;
+        }
+
+        // Después de un tiempo corto, entra en persecución fuerte.
+        if (contadorAcecho >= tiempoAntesDeEmboscada)
+        {
+            CambiarEstado(EstadoV37.Persecucion);
+            return;
+        }
+
+        // Si perdió completamente al jugador, va a la última posición.
+        if (!jugadorVisible && !jugadorCerca && contadorMemoria <= 0f)
+        {
+            CambiarEstado(EstadoV37.BuscarUltimaPosicion);
+        }
+    }
+
+    private void EstadoPersecucion(bool jugadorVisible, bool jugadorCerca)
+    {
+        // En persecución V37 debe sentirse peligroso.
+        agente.speed = velocidadEmboscada;
+        agente.acceleration = aceleracionPersecucion;
+        agente.isStopped = false;
+
+        // Si tiene memoria del jugador, sigue persiguiendo.
+        if (contadorMemoria > 0f)
+        {
+            ActualizarDestinoConIntervalo(ultimaPosicionConocidaJugador, 0.08f);
+        }
+
+        // Rota hacia el movimiento o hacia el jugador.
+        if (agente.velocity.sqrMagnitude > 0.2f)
+        {
+            RotarHaciaMovimiento();
+        }
+        else
+        {
+            RotarSoloEnYHacia(jugador.position);
+        }
+
+        // Ataca solo si realmente está cerca.
+        float distancia = Vector3.Distance(transform.position, jugador.position);
+
+        if (distancia <= distanciaAtaque)
+        {
+            RotarSoloEnYHacia(jugador.position);
+            AtacarJugador();
+        }
+
+        // Si ya no tiene memoria del jugador, busca la última posición.
+        if (!jugadorVisible && !jugadorCerca && contadorMemoria <= 0f)
+        {
+            CambiarEstado(EstadoV37.BuscarUltimaPosicion);
+        }
+    }
+
+    private void EstadoBuscarUltimaPosicion(bool jugadorVisible, bool jugadorCerca)
+    {
+        // Si vuelve a detectar al jugador, regresa a persecución.
+        if (jugadorVisible || jugadorCerca)
+        {
+            CambiarEstado(EstadoV37.Persecucion);
+            return;
+        }
+
+        // Va a la última posición donde detectó al jugador.
+        agente.speed = velocidadAcecho;
+        agente.isStopped = false;
+        ActualizarDestinoConIntervalo(ultimaPosicionConocidaJugador, 0.2f);
+
+        // Rota hacia el movimiento.
+        RotarHaciaMovimiento();
+
+        // Si llegó a la última posición, empieza a buscar.
+        if (!agente.pathPending && agente.remainingDistance <= 1.2f)
+        {
+            contadorBusqueda += Time.deltaTime;
+        }
+
+        // Si buscó un rato y no encontró nada, vuelve a patrulla.
+        if (contadorBusqueda >= tiempoBuscandoUltimaPosicion)
         {
             CambiarEstado(EstadoV37.Patrulla);
         }
     }
 
-    private void EstadoEmboscada()
+    private void ActualizarDestinoConIntervalo(Vector3 destino, float intervalo)
     {
-        // En emboscada, V37 hace un ataque rápido.
-        agente.speed = velocidadEmboscada;
+        // Evitamos llamar SetDestination cada frame sin necesidad.
+        contadorActualizarDestino -= Time.deltaTime;
 
-        // Corre directo hacia el jugador.
-        agente.SetDestination(jugador.position);
-
-        // Si está cerca, ataca.
-        float distancia = Vector3.Distance(transform.position, jugador.position);
-
-        if (distancia <= distanciaAtaque)
+        if (contadorActualizarDestino <= 0f)
         {
-            AtacarJugador();
-            CambiarEstado(EstadoV37.Recuperacion);
-        }
-    }
+            contadorActualizarDestino = intervalo;
 
-    private void EstadoRecuperacion()
-    {
-        // Después de emboscar, se detiene un momento.
-        agente.speed = 0f;
-
-        contadorRecuperacion += Time.deltaTime;
-
-        // Al terminar la recuperación, vuelve a acechar si el jugador sigue cerca.
-        if (contadorRecuperacion >= tiempoRecuperacionDespuesEmboscada)
-        {
-            float distancia = Vector3.Distance(transform.position, jugador.position);
-
-            if (distancia <= distanciaVision)
+            if (agente != null && agente.enabled && agente.isOnNavMesh)
             {
-                CambiarEstado(EstadoV37.Acecho);
-            }
-            else
-            {
-                CambiarEstado(EstadoV37.Patrulla);
+                agente.SetDestination(destino);
             }
         }
     }
@@ -198,18 +331,21 @@ private void Update()
     private bool PuedeVerJugador()
     {
         // Si no hay jugador, no puede verlo.
-        if (jugador == null) return false;
+        if (jugador == null)
+        {
+            return false;
+        }
 
-        // Calculamos dirección del enemigo hacia el jugador.
+        // Dirección hacia el jugador.
         Vector3 direccionAlJugador = jugador.position - transform.position;
 
-        // Revisamos distancia máxima.
+        // Revisamos distancia.
         if (direccionAlJugador.magnitude > distanciaVision)
         {
             return false;
         }
 
-        // Revisamos si el jugador está dentro del cono de visión.
+        // Revisamos ángulo de visión.
         float angulo = Vector3.Angle(transform.forward, direccionAlJugador);
 
         if (angulo > anguloVision * 0.5f)
@@ -217,34 +353,36 @@ private void Update()
             return false;
         }
 
-        // Lanzamos un raycast para comprobar si hay pared entre enemigo y jugador.
+        // Raycast desde el cuerpo de V37.
         Vector3 origenRayo = transform.position + Vector3.up * 1.5f;
         Vector3 direccionRayo = direccionAlJugador.normalized;
 
-        if (Physics.Raycast(origenRayo, direccionRayo, out RaycastHit hit, distanciaVision, capaObstaculos))
+        // Si una pared o estructura bloquea la visión, no ve al jugador.
+        if (Physics.Raycast(origenRayo, direccionRayo, direccionAlJugador.magnitude, capaObstaculos))
         {
-            // Si el rayo pega con una pared antes que con el jugador, no lo ve.
             return false;
         }
 
-        // Si pasó todas las pruebas, sí puede ver al jugador.
         return true;
     }
 
     private void AtacarJugador()
     {
-        // Evitamos atacar muchas veces seguidas.
-        if (contadorAtaque > 0f) return;
+        // Evitamos ataques repetidos demasiado rápido.
+        if (contadorAtaque > 0f)
+        {
+            return;
+        }
 
-        // Reiniciamos el contador de ataque.
+        // Reiniciamos cooldown.
         contadorAtaque = tiempoEntreAtaques;
 
-        // Mandamos daño al PlayerHealth sin depender del nombre exacto de tu función.
+        // Mandamos daño al jugador.
         if (jugador != null)
         {
-            jugador.SendMessage("RecibirDaño", danioAtaque, SendMessageOptions.DontRequireReceiver);
-            jugador.SendMessage("RecibirDanio", danioAtaque, SendMessageOptions.DontRequireReceiver);
-            jugador.SendMessage("TakeDamage", danioAtaque, SendMessageOptions.DontRequireReceiver);
+            jugador.SendMessage("RecibirDaño", dañoAtaque, SendMessageOptions.DontRequireReceiver);
+            jugador.SendMessage("RecibirDanio", dañoAtaque, SendMessageOptions.DontRequireReceiver);
+            jugador.SendMessage("TakeDamage", dañoAtaque, SendMessageOptions.DontRequireReceiver);
         }
 
         Debug.Log("V37 atacó al jugador.");
@@ -253,15 +391,24 @@ private void Update()
     private void IrAlSiguientePuntoPatrulla()
     {
         // Si no hay puntos de patrulla, no hacemos nada.
-        if (puntosPatrulla == null || puntosPatrulla.Length == 0) return;
+        if (puntosPatrulla == null || puntosPatrulla.Length == 0)
+        {
+            return;
+        }
+
+        // Si el agente no está listo, no hacemos nada.
+        if (agente == null || !agente.enabled || !agente.isOnNavMesh)
+        {
+            return;
+        }
 
         // Mandamos al agente al punto actual.
         agente.SetDestination(puntosPatrulla[indicePatrulla].position);
 
-        // Avanzamos al siguiente punto.
+        // Avanzamos al siguiente.
         indicePatrulla++;
 
-        // Si llegamos al final, volvemos al primer punto.
+        // Si llega al final, vuelve al primero.
         if (indicePatrulla >= puntosPatrulla.Length)
         {
             indicePatrulla = 0;
@@ -270,80 +417,189 @@ private void Update()
 
     private void CambiarEstado(EstadoV37 nuevoEstado)
     {
-        // Cambiamos el estado.
+        // Si está muerto, no puede cambiar de estado.
+        if (estaMuerto)
+        {
+            return;
+        }
+
+        // Cambiamos estado.
         estadoActual = nuevoEstado;
 
-        // Reiniciamos contadores importantes según el nuevo estado.
+        // Reiniciamos contadores dependiendo del estado.
         if (nuevoEstado == EstadoV37.Acecho)
         {
             contadorAcecho = 0f;
         }
 
-        if (nuevoEstado == EstadoV37.Recuperacion)
+        if (nuevoEstado == EstadoV37.BuscarUltimaPosicion)
         {
-            contadorRecuperacion = 0f;
+            contadorBusqueda = 0f;
+        }
+
+        // Si vuelve a patrullar, retomamos puntos.
+        if (nuevoEstado == EstadoV37.Patrulla)
+        {
+            IrAlSiguientePuntoPatrulla();
         }
 
         Debug.Log("V37 cambió a estado: " + nuevoEstado);
     }
 
+    private void RotarSoloEnYHacia(Vector3 objetivo)
+    {
+        // Calculamos dirección.
+        Vector3 direccion = objetivo - transform.position;
+
+        // Eliminamos altura para evitar inclinación.
+        direccion.y = 0f;
+
+        // Si la dirección es muy pequeña, no rotamos.
+        if (direccion.sqrMagnitude < 0.01f)
+        {
+            return;
+        }
+
+        // Calculamos rotación horizontal.
+        Quaternion rotacionObjetivo = Quaternion.LookRotation(direccion);
+
+        // Rotamos suavemente.
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            rotacionObjetivo,
+            velocidadRotacion * Time.deltaTime
+        );
+    }
+
+    private void RotarHaciaMovimiento()
+    {
+        // Usamos la velocidad del agente.
+        Vector3 direccion = agente.velocity;
+
+        // Eliminamos altura.
+        direccion.y = 0f;
+
+        // Si casi no se mueve, no rotamos.
+        if (direccion.sqrMagnitude < 0.05f)
+        {
+            return;
+        }
+
+        // Calculamos rotación.
+        Quaternion rotacionObjetivo = Quaternion.LookRotation(direccion);
+
+        // Rotamos suavemente.
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            rotacionObjetivo,
+            velocidadRotacion * Time.deltaTime
+        );
+    }
+
+    private void MantenerRotacionRecta()
+    {
+        // Conservamos la Y.
+        float rotacionY = transform.eulerAngles.y;
+
+        // Forzamos X y Z a cero para que no se incline.
+        transform.rotation = Quaternion.Euler(0f, rotacionY, 0f);
+    }
+
     public void Stun(float duracion)
     {
-        // Esta función sirve para que tus armas o trampas puedan aturdir a V37.
+        // Si murió, no se puede aturdir.
+        if (estaMuerto)
+        {
+            return;
+        }
+
+        // Activamos stun.
         estaStuneado = true;
 
-        // Guardamos cuánto tiempo durará el stun.
+        // Guardamos duración.
         contadorStun = duracion;
 
-        // Detenemos al agente.
-        agente.isStopped = true;
+        // Detenemos agente.
+        if (agente != null && agente.enabled)
+        {
+            agente.isStopped = true;
+            agente.ResetPath();
+        }
     }
 
     private void ProcesarStun()
     {
-        // Bajamos el contador de stun.
+        // Bajamos el tiempo.
         contadorStun -= Time.deltaTime;
 
-        // Cuando termina el stun, V37 vuelve a moverse.
+        // Si terminó, vuelve a perseguir si recuerda al jugador.
         if (contadorStun <= 0f)
         {
             estaStuneado = false;
 
-            agente.isStopped = false;
+            if (agente != null && agente.enabled)
+            {
+                agente.isStopped = false;
+            }
 
-            CambiarEstado(EstadoV37.Recuperacion);
+            if (contadorMemoria > 0f)
+            {
+                CambiarEstado(EstadoV37.Persecucion);
+            }
+            else
+            {
+                CambiarEstado(EstadoV37.BuscarUltimaPosicion);
+            }
         }
+    }
+
+    public void DetenerIA()
+    {
+        // Evitamos detener dos veces.
+        if (estaMuerto)
+        {
+            return;
+        }
+
+        // Marcamos muerto.
+        estaMuerto = true;
+        estadoActual = EstadoV37.Muerto;
+
+        // Detenemos NavMeshAgent.
+        if (agente != null && agente.enabled)
+        {
+            agente.isStopped = true;
+            agente.ResetPath();
+            agente.enabled = false;
+        }
+
+        // Dejamos el cuerpo recto.
+        MantenerRotacionRecta();
+
+        // Apagamos este script.
+        enabled = false;
+
+        Debug.Log("IA de V37 detenida por muerte.");
     }
 
     public void Morir()
     {
-        // Marcamos al enemigo como muerto.
-        estaMuerto = true;
-
-        // Detenemos el NavMeshAgent.
-        if (agente != null)
-        {
-            agente.isStopped = true;
-            agente.enabled = false;
-        }
-
-        // Desactivamos este script.
-        enabled = false;
+        // Compatibilidad por si otro script llama Morir directamente.
+        DetenerIA();
     }
 
     private void OnDrawGizmosSelected()
     {
-        // Dibujamos la distancia de visión.
+        // Visión.
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, distanciaVision);
 
-        // Dibujamos la distancia de acecho.
+        // Acecho.
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, distanciaAcecho);
 
-        // Dibujamos la distancia de ataque.
+        // Ataque real.
         Gizmos.color = Color.magenta;
         Gizmos.DrawWireSphere(transform.position, distanciaAtaque);
     }
-
 }
