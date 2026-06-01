@@ -189,6 +189,16 @@ if (ControlPartida.PartidaTerminada)
 
         SoltarObjeto();
 
+ObjetoArrojadoDaniaV19 objetoDaniaV19 = rbLanzado.GetComponent<ObjetoArrojadoDaniaV19>();
+
+if( objetoDaniaV19 != null)
+        {
+            objetoDaniaV19.ActivarComoProyectil();
+        }
+        
+
+
+
         rbLanzado.AddForce(camaraJugador.transform.forward * fuerzaLanzamiento, ForceMode.Impulse);
         rbLanzado.AddTorque(Random.onUnitSphere * torqueLanzamiento, ForceMode.Impulse);
     }
