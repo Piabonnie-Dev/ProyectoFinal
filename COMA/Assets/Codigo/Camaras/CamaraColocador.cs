@@ -24,6 +24,7 @@ public class CamaraColocador : MonoBehaviour
 
     private void Start()
     {
+        
         // Si no asignaste la cámara del jugador desde el Inspector, usamos la cámara principal.
         if (camaraJugador == null)
         {
@@ -39,6 +40,10 @@ public class CamaraColocador : MonoBehaviour
 
     private void Update()
     {
+
+        // Si el juego está pausado, no permitimos acciones.
+if (EstadoJuego.JuegoPausado)
+    return;
         // Presionar 6 ahora SOLO selecciona la herramienta de cámara.
         // Ya no funciona como interruptor, así que no puede decir "cámara guardada".
         if (Input.GetKeyDown(teclaSeleccionarCamara))

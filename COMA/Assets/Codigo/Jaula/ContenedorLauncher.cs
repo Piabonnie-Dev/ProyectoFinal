@@ -24,6 +24,9 @@ public class ContenedorLauncher : MonoBehaviour
 
    private void Update()
    {
+      // Si el juego está pausado, no permitimos acciones.
+if (EstadoJuego.JuegoPausado)
+    return;
       if(Input.GetKeyDown(teclaLanzar))
       {
 LanzarContenedor();

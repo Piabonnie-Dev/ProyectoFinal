@@ -33,6 +33,9 @@ void Update()
 if (ControlPartida.PartidaTerminada)
     return;
 
+    if(EstadoJuego.JuegoPausado)
+    return;
+
          if (UIInventarioLoot.InventarioAbierto)
         return;
         

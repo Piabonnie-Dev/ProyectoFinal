@@ -60,6 +60,9 @@ public class PlayerJaulaInteractor : MonoBehaviour
 
     private void Update()
     {
+        // Si el juego está pausado, no permitimos acciones.
+if (EstadoJuego.JuegoPausado)
+    return;
         // Si estamos cargando una jaula, actualizamos su movimiento.
         if (cargandoJaula)
         {

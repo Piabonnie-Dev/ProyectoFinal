@@ -39,7 +39,9 @@ public class AgarrarObjetos : MonoBehaviour
 if (ControlPartida.PartidaTerminada)
     return;
 
-
+// Si el juego está pausado, no permitimos acciones.
+if (EstadoJuego.JuegoPausado)
+    return;
 
         if (camaraJugador != null)
         {
@@ -70,6 +72,9 @@ if (ControlPartida.PartidaTerminada)
     void FixedUpdate()
     {
 if (ControlPartida.PartidaTerminada)
+    return;
+    // Si el juego está pausado, no permitimos acciones.
+if (EstadoJuego.JuegoPausado)
     return;
 
         if (objetoActual != null)

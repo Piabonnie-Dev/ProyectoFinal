@@ -2420,7 +2420,7 @@ MonoBehaviour:
   puntosPatrulla: []
   capaObstaculos:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   distanciaMaximaParaDetenerlo: 35
   anguloMiradaJugador: 28
   distanciaActivacion: 40
@@ -2429,7 +2429,7 @@ MonoBehaviour:
   velocidadPersecucion: 8
   aceleracion: 35
   velocidadRotacion: 14
-  distanciaAtaque: 1.6
+  distanciaAtaque: 3.34
   danioMortal: 9999
   tiempoEntreAtaques: 0.7
   golpesDeObjetoParaMorir: 1
@@ -18562,7 +18562,7 @@ Transform:
   m_GameObject: {fileID: 1090319514}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 829.4, y: 51.36, z: 1367.5}
+  m_LocalPosition: {x: 829.4, y: 53.62, z: 1367.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
