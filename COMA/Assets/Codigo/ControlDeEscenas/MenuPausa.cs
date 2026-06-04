@@ -114,6 +114,14 @@ private void Update()
         SceneManager.LoadScene(nombreEscenaMenuInicio);
     }
 
+    public void IrAlMenuPrincipal()
+    {
+        Time.timeScale = 1f;
+        EstadoJuego.JuegoPausado = false;
+
+        SceneManager.LoadScene(nombreEscenaMenuInicio);
+    }
+
     public void SalirDelJuego()
     {
         Application.Quit();
