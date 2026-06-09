@@ -7,6 +7,11 @@ public class EnemyHealth : MonoBehaviour
     public float vidaMaxima = 100f;
     public float vidaActual = 100f;
 
+    [Header("Reglas especiales de daño")]
+    public bool soloDanoPorObjetos = false;
+    public float danoPorObjeto = 1f;
+    public float fuerzaMinimaObjeto = 9f;
+
     [Header("Estado")]
     public bool estaMuerto = false;
     public bool estaAturdido = false;
@@ -17,13 +22,13 @@ public class EnemyHealth : MonoBehaviour
 
     private void Awake()
     {
-        // La vida actual inicia igual a la vida máxima.
+        // La vida actual inicia llena.
         vidaActual = vidaMaxima;
 
         // Buscamos el NavMeshAgent del enemigo.
         agent = GetComponent<NavMeshAgent>();
 
-        // Guardamos la velocidad original para recuperarla después del stun.
+        // Guardamos su velocidad original por si lo aturdimos.
         if (agent != null)
         {
             velocidadOriginal = agent.speed;
@@ -32,18 +37,17 @@ public class EnemyHealth : MonoBehaviour
 
     private void Update()
     {
-        // Si ya murió, no procesamos nada más.
+        // Si ya murió, no procesamos nada.
         if (estaMuerto)
         {
             return;
         }
 
-        // Si estaba aturdido y ya terminó el tiempo, se recupera.
+        // Si estaba aturdido y ya terminó el tiempo, recupera movimiento.
         if (estaAturdido && Time.time >= tiempoFinStun)
         {
             estaAturdido = false;
 
-            // Restauramos la velocidad original.
             if (agent != null && agent.enabled)
             {
                 agent.isStopped = false;
@@ -54,33 +58,40 @@ public class EnemyHealth : MonoBehaviour
 
     public void RecibirDaño(float cantidad)
     {
-        // Versión con ñ, por si la hitbox o el arma usan este nombre.
-        AplicarDaño(cantidad);
+        // Versión con ñ.
+        AplicarDanoNormal(cantidad);
     }
 
     public void RecibirDanio(float cantidad)
     {
-        // Versión sin ñ, que es la que ya estabas usando.
-        AplicarDaño(cantidad);
+        // Versión sin ñ.
+        AplicarDanoNormal(cantidad);
     }
 
     public void RecibirDano(float cantidad)
     {
         // Otra versión sin caracteres especiales.
-        AplicarDaño(cantidad);
+        AplicarDanoNormal(cantidad);
     }
 
     public void TakeDamage(float cantidad)
     {
-        // Versión en inglés, por compatibilidad con otros scripts.
-        AplicarDaño(cantidad);
+        // Versión en inglés.
+        AplicarDanoNormal(cantidad);
     }
 
-    private void AplicarDaño(float cantidad)
+    private void AplicarDanoNormal(float cantidad)
     {
-        // Si ya murió, no recibe más daño.
+        // Si ya murió, no recibe daño.
         if (estaMuerto)
         {
+            return;
+        }
+
+        // Si este enemigo solo recibe daño por objetos, ignora balas, trampas y stun.
+        if (soloDanoPorObjetos)
+        {
+            Debug.Log(gameObject.name + " ignoró daño normal. Solo objetos lanzados le hacen daño.");
             return;
         }
 
@@ -97,18 +108,55 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    public void Aturdir(float duracion)
+    public void RecibirGolpeObjeto(float fuerzaGolpe)
     {
-        // Si ya murió, no puede ser aturdido.
+        // Si ya murió, no recibe daño.
         if (estaMuerto)
         {
             return;
         }
 
-        // Marcamos estado de aturdimiento.
+        // Si el objeto no venía con fuerza suficiente, no cuenta.
+        if (fuerzaGolpe < fuerzaMinimaObjeto)
+        {
+            Debug.Log(gameObject.name + " recibió un golpe débil. No cuenta como daño.");
+            return;
+        }
+
+        // Para V19, cada objeto lanzado le baja una cantidad fija.
+        vidaActual -= danoPorObjeto;
+
+        // Limitamos la vida.
+        vidaActual = Mathf.Clamp(vidaActual, 0f, vidaMaxima);
+
+        Debug.Log(gameObject.name + " recibió golpe de objeto. Vida: " + vidaActual + " / " + vidaMaxima);
+
+        // Si se queda sin vida, muere.
+        if (vidaActual <= 0f)
+        {
+            Morir();
+        }
+    }
+
+    public void Aturdir(float duracion)
+    {
+        // Si ya murió, no se aturde.
+        if (estaMuerto)
+        {
+            return;
+        }
+
+        // Si solo recibe daño por objetos, también ignora aturdimiento.
+        if (soloDanoPorObjetos)
+        {
+            Debug.Log(gameObject.name + " ignoró el aturdimiento.");
+            return;
+        }
+
+        // Activamos estado de aturdimiento.
         estaAturdido = true;
 
-        // Calculamos cuándo termina el stun.
+        // Guardamos cuándo termina.
         tiempoFinStun = Time.time + duracion;
 
         // Detenemos el NavMeshAgent.
@@ -120,7 +168,7 @@ public class EnemyHealth : MonoBehaviour
             agent.ResetPath();
         }
 
-        // Avisamos a la IA que también debe detenerse.
+        // Avisamos a la IA que también está stuneada.
         BroadcastMessage("Stun", duracion, SendMessageOptions.DontRequireReceiver);
     }
 
@@ -132,14 +180,14 @@ public class EnemyHealth : MonoBehaviour
             return;
         }
 
-        // Marcamos muerte.
+        // Marcamos muerto.
         estaMuerto = true;
         vidaActual = 0f;
 
-        // Avisamos a las IA del enemigo que deben apagarse.
+        // Avisamos a la IA que debe detenerse.
         BroadcastMessage("DetenerIA", SendMessageOptions.DontRequireReceiver);
 
-        // Detenemos completamente el NavMeshAgent.
+        // Detenemos el NavMeshAgent.
         if (agent != null && agent.enabled)
         {
             agent.isStopped = true;

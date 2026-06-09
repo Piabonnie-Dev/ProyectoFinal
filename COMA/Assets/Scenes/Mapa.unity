@@ -722,6 +722,89 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &87475893
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 87475894}
+  - component: {fileID: 87475897}
+  - component: {fileID: 87475896}
+  m_Layer: 8
+  m_Name: Modelo_V19
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &87475894
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87475893}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.7, z: 0}
+  m_LocalScale: {x: 1.4, y: 1.7, z: 1.4}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 253635364}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &87475896
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87475893}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 4cb8a76f4c0aaae4d872584477af5e5d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &87475897
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87475893}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &94812827
 GameObject:
   m_ObjectHideFlags: 0
@@ -1817,6 +1900,22 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3527422042016152635, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.9051
+      objectReference: {fileID: 0}
+    - target: {fileID: 3527422042016152635, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.9051
+      objectReference: {fileID: 0}
+    - target: {fileID: 3527422042016152635, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.9051
+      objectReference: {fileID: 0}
+    - target: {fileID: 3527422042016152635, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 140
+      objectReference: {fileID: 0}
     - target: {fileID: 5569336278788707822, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1896,6 +1995,10 @@ PrefabInstance:
     - target: {fileID: 5569336278788707822, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5921649800397038838, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 169
       objectReference: {fileID: 0}
     - target: {fileID: 7716371734897447782, guid: 4501078f3053b4e44b10bf839d071fe7, type: 3}
       propertyPath: m_AnchorMax.x
@@ -2228,7 +2331,7 @@ GameObject:
   - component: {fileID: 231832420}
   - component: {fileID: 231832419}
   m_Layer: 0
-  m_Name: Main Camera
+  m_Name: Main Camera Player
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2553,13 +2656,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 253635364}
-  - component: {fileID: 253635367}
-  - component: {fileID: 253635366}
   - component: {fileID: 253635365}
   - component: {fileID: 253635370}
   - component: {fileID: 253635369}
   - component: {fileID: 253635368}
-  m_Layer: 8
+  - component: {fileID: 253635371}
+  m_Layer: 0
   m_Name: enemigo_V19
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2576,10 +2678,11 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 838.94, y: 58.68, z: 1386.73}
-  m_LocalScale: {x: 2.5, y: 3, z: 2.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2120066525}
+  - {fileID: 87475894}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &253635365
@@ -2601,60 +2704,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1
-  m_Height: 3
+  m_Radius: 0.7
+  m_Height: 3.4
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &253635366
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 253635363}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4cb8a76f4c0aaae4d872584477af5e5d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &253635367
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 253635363}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  m_Center: {x: 0, y: 1.7, z: 0}
 --- !u!114 &253635368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2670,23 +2723,30 @@ MonoBehaviour:
   jugador: {fileID: 1090319522}
   camaraJugador: {fileID: 231832418}
   agente: {fileID: 253635370}
+  vida: {fileID: 253635371}
   puntosPatrulla: []
   capaObstaculos:
     serializedVersion: 2
     m_Bits: 256
-  distanciaMaximaParaDetenerlo: 35
-  anguloMiradaJugador: 28
+  distanciaMaximaParaDetenerlo: 50
+  anguloMiradaJugador: 60
+  alturaPuntoMirada: 1.3
   distanciaActivacion: 40
   tiempoMemoriaJugador: 8
   velocidadPatrulla: 2
   velocidadPersecucion: 8
   aceleracion: 35
   velocidadRotacion: 14
-  distanciaAtaque: 3.34
+  distanciaAtaque: 3.5
   danioMortal: 9999
   tiempoEntreAtaques: 0.7
-  golpesDeObjetoParaMorir: 1
   fuerzaMinimaObjeto: 9
+  elJugadorLoEstaMirando: 0
+  debugEstaEnPantalla: 0
+  debugHayObstaculo: 0
+  debugAngulo: 0
+  debugDistancia: 0
+  distanciaActualAlJugador: 0
   estadoActual: 0
 --- !u!54 &253635369
 Rigidbody:
@@ -2729,14 +2789,33 @@ NavMeshAgent:
   m_Acceleration: 35
   avoidancePriority: 50
   m_AngularSpeed: 720
-  m_StoppingDistance: 1.4
+  m_StoppingDistance: 0.5
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 1.9999962
-  m_BaseOffset: 0.9999981
+  m_Height: 3.4
+  m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &253635371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253635363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69dd2733356d1ff489841ae42b49798b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vidaMaxima: 10
+  vidaActual: 10
+  soloDanoPorObjetos: 1
+  danoPorObjeto: 1
+  fuerzaMinimaObjeto: 9
+  estaMuerto: 0
+  estaAturdido: 0
 --- !u!1 &255531704
 GameObject:
   m_ObjectHideFlags: 0
@@ -10730,11 +10809,11 @@ GameObject:
   - component: {fileID: 613516734}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!20 &613516734
 Camera:
   m_ObjectHideFlags: 0
@@ -11622,13 +11701,13 @@ MonoBehaviour:
   m_HandleRect: {fileID: 661424074}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 300
+  m_MaxValue: 180
   m_WholeNumbers: 1
   m_Value: 180
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1720745968}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
         m_MethodName: CambiarSensibilidad
         m_Mode: 4
@@ -24461,8 +24540,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
-        m_MethodName: CerrarOpciones
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
+        m_MethodName: VolverDesdeOpciones
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -27890,8 +27969,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
-        m_MethodName: SalirDelJuego
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
+        m_MethodName: Salir
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -32699,6 +32778,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vidaMaxima: 100
   vidaActual: 100
+  soloDanoPorObjetos: 0
+  danoPorObjeto: 1
+  fuerzaMinimaObjeto: 9
   estaMuerto: 0
   estaAturdido: 0
 --- !u!195 &1619027971
@@ -33228,6 +33310,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vidaMaxima: 300
   vidaActual: 300
+  soloDanoPorObjetos: 0
+  danoPorObjeto: 1
+  fuerzaMinimaObjeto: 9
   estaMuerto: 0
   estaAturdido: 0
 --- !u!54 &1637063123
@@ -33729,8 +33814,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
-        m_MethodName: ReiniciarEscena
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
+        m_MethodName: Reiniciar
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -33854,17 +33939,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1720745966}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b491e26a94f66c149bb63f960b3a7bc7, type: 3}
+  m_Script: {fileID: 11500000, guid: d2e44e9f72fd60b4b98539856ac108fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelPausa: {fileID: 227411365}
-  panelOpciones: {fileID: 307842555}
+  panelMenuPausa: {fileID: 227411365}
+  panelOpcionesPausa: {fileID: 307842555}
   nombreEscenaMenuInicio: MenuInicio
   sliderVolumen: {fileID: 1824657288}
   sliderSensibilidad: {fileID: 670853610}
   textoVolumen: {fileID: 1489380261}
   textoSensibilidad: {fileID: 501589531}
-  camaraFPS: {fileID: 2137567702}
+  camaraPrimeraPersona: {fileID: 2137567702}
 --- !u!1 &1741706212
 GameObject:
   m_ObjectHideFlags: 0
@@ -34555,7 +34640,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1720745968}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
         m_MethodName: CambiarVolumen
         m_Mode: 4
@@ -45771,8 +45856,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
-        m_MethodName: IrAlMenuPrincipal
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
+        m_MethodName: IrAlMenuInicio
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -46448,7 +46533,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
         m_MethodName: AbrirOpciones
         m_Mode: 1
         m_Arguments:
@@ -46581,7 +46666,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1720745968}
-        m_TargetAssemblyTypeName: MenuPausa, Assembly-CSharp
+        m_TargetAssemblyTypeName: MenuPausaCOMA, Assembly-CSharp
         m_MethodName: Reanudar
         m_Mode: 1
         m_Arguments:
