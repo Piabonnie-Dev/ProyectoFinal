@@ -5,6 +5,10 @@ using TMPro;
 
 public class MenuPausaCOMA : MonoBehaviour
 {
+
+[Header("Ventanas de gameplay")]
+public UIInventarioLoot uiInventario;
+
     [Header("Paneles")]
     public GameObject panelMenuPausa;
     public GameObject panelOpcionesPausa;
@@ -81,6 +85,12 @@ public class MenuPausaCOMA : MonoBehaviour
 
     public void Pausar()
     {
+// Cerramos el inventario antes de abrir la pausa.
+if (uiInventario != null)
+{
+    uiInventario.CerrarInventarioForzado();
+}
+
         // Marcamos que el juego está pausado.
         juegoPausado = true;
 

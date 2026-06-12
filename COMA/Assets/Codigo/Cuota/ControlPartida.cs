@@ -4,12 +4,16 @@ using UnityEngine.SceneManagement;
 
 public class ControlPartida : MonoBehaviour
 {
-    public static bool PartidaTerminada { get; private set; }
+    public static bool PartidaTerminada
+    {
+        get;
+        private set;
+    }
 
     [Header("Referencias")]
     public ProgresoJugador progreso;
 
-    [Header("Victoria")]
+    [Header("Victoria final")]
     public GameObject panelVictoria;
     public TMP_Text textoVictoria;
 
@@ -17,77 +21,115 @@ public class ControlPartida : MonoBehaviour
     public GameObject panelDerrota;
     public TMP_Text textoDerrota;
 
-    [Header("UI a cerrar")]
+    [Header("Interfaces que deben cerrarse")]
     public UIInventarioLoot uiInventario;
     public SuitUpgradeUI uiTraje;
 
-    void Start()
+    private void Start()
     {
+        // Reiniciamos estado global.
         PartidaTerminada = false;
         Time.timeScale = 1f;
 
+        // Ocultamos pantallas finales.
         if (panelVictoria != null)
+        {
             panelVictoria.SetActive(false);
+        }
 
         if (panelDerrota != null)
+        {
             panelDerrota.SetActive(false);
-
-        if (progreso != null)
-            progreso.AlCumplirCuota += TerminarPartidaPorCuota;
+        }
     }
 
-    void OnDestroy()
+    private void CerrarPanelesAbiertos()
     {
-        if (progreso != null)
-            progreso.AlCumplirCuota -= TerminarPartidaPorCuota;
-    }
-
-    void CerrarPanelesAbiertos()
-    {
+        // Cerramos inventario.
         if (uiInventario != null)
+        {
             uiInventario.CerrarInventarioForzado();
+        }
 
+        // Cerramos mejoras del traje.
         if (uiTraje != null)
+        {
             uiTraje.CerrarPanelForzado();
+        }
     }
 
-    void TerminarPartidaPorCuota()
+    public void TerminarPartidaPorVictoria()
     {
+        // Evitamos terminar dos veces.
         if (PartidaTerminada)
+        {
             return;
+        }
+
+        // Por seguridad comprobamos que exista progreso
+        // y que realmente se haya cumplido la cuota.
+        if (progreso != null && !progreso.CuotaCumplida)
+        {
+            Debug.LogWarning(
+                "Se intentó finalizar sin cumplir la cuota."
+            );
+
+            return;
+        }
 
         PartidaTerminada = true;
 
         CerrarPanelesAbiertos();
 
+        // Mostramos victoria.
         if (panelVictoria != null)
+        {
             panelVictoria.SetActive(true);
+        }
 
         if (textoVictoria != null)
-            textoVictoria.text = "CUOTA CUMPLIDA\nPartida terminada";
+        {
+            textoVictoria.text =
+                "¡FELICIDADES!\n\n" +
+                "ACABASTE EL JUEGO\n\n" +
+                "Lograste cumplir la cuota y escapar " +
+                "de las instalaciones.";
+        }
 
+        // Liberamos el cursor.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // Congelamos la partida.
         Time.timeScale = 0f;
     }
 
     public void TerminarPartidaPorMuerte()
     {
         if (PartidaTerminada)
+        {
             return;
+        }
 
         PartidaTerminada = true;
 
         CerrarPanelesAbiertos();
 
         if (panelDerrota != null)
+        {
             panelDerrota.SetActive(true);
+        }
 
         if (textoDerrota != null)
-            textoDerrota.text = "HAS MUERTO\nPartida terminada";
+        {
+            textoDerrota.text =
+                "HAS MUERTO\n\n" +
+                "No lograste escapar de las instalaciones.";
+        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
         Time.timeScale = 0f;
     }
 
@@ -95,6 +137,17 @@ public class ControlPartida : MonoBehaviour
     {
         Time.timeScale = 1f;
         PartidaTerminada = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().buildIndex
+        );
+    }
+
+    public void IrAlMenuInicio()
+    {
+        Time.timeScale = 1f;
+        PartidaTerminada = false;
+
+        SceneManager.LoadScene("MenuInicio");
     }
 }
