@@ -6,193 +6,116 @@ public class ZonaExtraccion : MonoBehaviour
     [Header("Referencias")]
     public InventarioLoot inventario;
     public ProgresoJugador progreso;
-
-    [Header("Interfaz")]
     public TMP_Text textoPrompt;
     public TMP_Text textoResultado;
+    public Transform puntoReinicioOpcional;
 
     [Header("Entrada")]
     public KeyCode teclaExtraer = KeyCode.X;
 
-    [Header("Mensajes")]
-    public float tiempoMensajeResultado = 3f;
-
     private bool jugadorDentro = false;
+    private GameObject jugadorActual;
 
-    private void Start()
+
+    void Start()
     {
-        // Ocultamos mensajes al iniciar.
-        if (textoPrompt != null)
-        {
-            textoPrompt.gameObject.SetActive(false);
-        }
+        
+        if(textoPrompt != null)
+        textoPrompt.gameObject.SetActive(false);
 
-        if (textoResultado != null)
-        {
-            textoResultado.gameObject.SetActive(false);
-        }
+        if(textoResultado != null)
+        textoResultado.gameObject.SetActive(false);
     }
-
-    private void Update()
+    void Update()
     {
-        // No permitimos extraer cuando la partida terminó.
-        if (ControlPartida.PartidaTerminada)
-        {
-            return;
-        }
+if (ControlPartida.PartidaTerminada)
+    return;
 
-        // Solo escuchamos la tecla estando dentro.
-        if (!jugadorDentro)
-        {
-            return;
-        }
+        if(!jugadorDentro)
+        return;
 
-        if (Input.GetKeyDown(teclaExtraer))
+        if(Input.GetKeyDown(teclaExtraer))
         {
             IntentarExtraer();
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider ohter)
     {
-        if (!other.CompareTag("Player"))
+        if(!ohter.CompareTag("Player"))
+        return;
+
+     jugadorDentro = true;
+     jugadorActual = ohter.gameObject;
+
+     if(textoPrompt != null)
         {
-            return;
-        }
-
-        jugadorDentro = true;
-
-        ActualizarPrompt();
+            textoPrompt.text = "Presiona X para EXTRAER";
+            textoPrompt.gameObject.SetActive(true);
+        }   
     }
-
-    private void OnTriggerExit(Collider other)
+    void OnTriggerExit(Collider ohter)
     {
-        if (!other.CompareTag("Player"))
-        {
-            return;
-        }
+        if(!ohter.CompareTag("Player"))
+        return;
 
         jugadorDentro = false;
+        jugadorActual = null;
 
-        if (textoPrompt != null)
-        {
-            textoPrompt.gameObject.SetActive(false);
-        }
+        if(textoPrompt != null)
+        textoPrompt.gameObject.SetActive(false);
     }
 
-    private void ActualizarPrompt()
+   void IntentarExtraer()
     {
-        if (textoPrompt == null)
+        if(inventario == null || progreso == null)
         {
+            Debug.LogWarning("Falta asignar inventarioo progreso en ZonaExtraccion.");
             return;
         }
-
-        textoPrompt.gameObject.SetActive(true);
-
-        if (inventario == null || inventario.EstaVacio)
+        if(inventario.lootRecolectado.Count <= 0 || inventario.valorTotal <= 0)
         {
-            textoPrompt.text =
-                "No tienes loot para extraer";
-        }
-        else
-        {
-            textoPrompt.text =
-                "Presiona X para EXTRAER\n" +
-                inventario.CantidadObjetos +
-                " objetos | $" +
-                inventario.valorTotal;
-        }
-    }
-
-    private void IntentarExtraer()
-    {
-        // Comprobamos referencias.
-        if (inventario == null || progreso == null)
-        {
-            Debug.LogWarning(
-                "Falta asignar InventarioLoot o ProgresoJugador " +
-                "en ZonaExtraccion."
-            );
-
+            MostrarResultado("No tienes nada que extraer.");
+            Debug.Log("No hay loot en el inventario.");
             return;
         }
-
-        // No permitimos extraer inventario vacío.
-        if (inventario.EstaVacio ||
-            inventario.valorTotal <= 0)
-        {
-            MostrarResultado(
-                "No tienes nada que extraer."
-            );
-
-            ActualizarPrompt();
-
-            return;
-        }
-
-        // Guardamos los datos antes de vaciarlo.
         int valorExtraido = inventario.valorTotal;
-        int cantidadObjetos = inventario.CantidadObjetos;
+        int cantidadObjetos = inventario.lootRecolectado.Count;
 
-        // Sumamos dinero y progreso de cuota.
         progreso.AgregarDinero(valorExtraido);
-
-        // Eliminamos el contenido entregado.
         inventario.VaciarInventario();
 
-        // Mostramos un resultado dependiendo de la cuota.
-        if (progreso.CuotaCumplida)
+        MostrarResultado("Extraccion exitosa!\n+" + valorExtraido + "$ | Objetos:" + cantidadObjetos);
+        Debug.Log("Extraccion exitosa! Ganaste $" + valorExtraido);
+
+        if(puntoReinicioOpcional != null && jugadorActual != null)
         {
-            MostrarResultado(
-                "EXTRACCIÓN EXITOSA\n" +
-                "+" + valorExtraido + "$\n" +
-                cantidadObjetos + " objetos entregados\n\n" +
-                "CUOTA CUMPLIDA\n" +
-                "REGRESA A LA REJA"
-            );
-        }
-        else
-        {
-            MostrarResultado(
-                "EXTRACCIÓN EXITOSA\n" +
-                "+" + valorExtraido + "$\n" +
-                cantidadObjetos + " objetos entregados\n\n" +
-                "Faltan $" +
-                progreso.ObtenerCantidadFaltante() +
-                " para la cuota"
-            );
-        }
+            CharacterController controller = jugadorActual.GetComponent<CharacterController>();
+if (controller != null)
+controller.enabled = false;
 
-        ActualizarPrompt();
+jugadorActual.transform.position = puntoReinicioOpcional.position;
 
-        Debug.Log(
-            "Extracción exitosa. Valor: $" + valorExtraido
-        );
-    }
+if(controller != null)
+controller.enabled = true;
 
-    private void MostrarResultado(string mensaje)
+        }   
+    } 
+
+    void MostrarResultado(string mensaje)
     {
-        if (textoResultado == null)
+        if(textoResultado != null)
         {
-            return;
+            textoResultado.text = mensaje;
+            textoResultado.gameObject.SetActive(true);
+            CancelInvoke(nameof(OcultarResultado));
+            Invoke(nameof(OcultarResultado), 2.5f);
+
         }
-
-        textoResultado.text = mensaje;
-        textoResultado.gameObject.SetActive(true);
-
-        CancelInvoke(nameof(OcultarResultado));
-
-        Invoke(
-            nameof(OcultarResultado),
-            tiempoMensajeResultado
-        );
     }
-
-    private void OcultarResultado()
+    void OcultarResultado()
     {
-        if (textoResultado != null)
-        {
-            textoResultado.gameObject.SetActive(false);
-        }
+        if(textoResultado != null)
+        textoResultado.gameObject.SetActive(false);
     }
 }
